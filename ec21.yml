@@ -1,0 +1,95 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "Create EC2 Instance"
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - DEV
+      - QA
+      - PROD
+      - DR
+
+  Applications:
+    Type: String
+    AllowedValues:
+      - BATA
+      - TATA
+
+  Count:
+    Description: 'Enter no of instance'
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 100
+
+
+Mappings:
+  EnvMap:
+    DEV:
+      instanceType: t2.micro
+      name: DEV
+      PubSub1: subnet-0b3381567c5723045
+      region: us-east-1a
+      SecurityGroup:
+        - sg-0e106eede6da554da
+        - sg-07311584c28cd1e74
+      KeyName: ansible
+
+    QA:
+      instanceType: t2.micro
+      name: QA
+      subnet: PubSub1
+      region: us-east-1a
+
+    PROD:
+        instanceType: t2.micro
+        name: PROD
+        subnet: PubSub1
+        region: us-east-1a
+
+    DR:
+       instanceType: t2.micro
+       name: DR
+       subnet: PubSub1
+       region: us-east-1a
+
+  AppMap:
+    BATA:
+        image: ami-04d29b6f966df1537
+        name:  BATA
+
+    TATA:
+        image: ami-00ddb0e5626798373
+        name: TATA
+
+Resources:
+   Instance:
+     Type: AWS::EC2::Instance
+     Properties:
+       AvailabilityZone: !FindInMap [EnvMap, !Ref Environment, region]
+       ImageId: !FindInMap [AppMap, !Ref Applications, image]
+       InstanceType: !FindInMap [EnvMap, !Ref Environment, instanceType]
+       KeyName: !FindInMap [EnvMap, !Ref Environment, KeyName]
+       SubnetId: !FindInMap [EnvMap, !Ref Environment, PubSub1]
+       SecurityGroupIds: !FindInMap [EnvMap, !Ref Environment, SecurityGroup]
+      #   - sg-0e106eede6da554da
+      #   - sg-07311584c28cd1e74
+    #SecurityGroupId: !FindInMap [EnvMap, !Ref Environment, SecurityGroupID]
+   #SecurityGroup:
+    #Type: AWS::EC2::SecurityGroup
+    #Properties:
+      #GroupDescription: PubSG
+       #SecurityGroupId: !FindInMap [EnvMap, !Ref Environment, PubSG]
+       #VpcId: !FindInMap [EnvMap, !Ref Environment, vpc]
+       #SecurityGroup: !FindInMap [EnvMap, !Ref Environment, sg]
+      #!FindInMap [EnvMap, !Ref Environment, PubSG]
+       #Ingress: !FindInMap [EnvMap, !Ref Environment, PubSG]
+       #Count: !Ref Count
+       #aws_access_key: AKIAY72BLNYA5HE4TFTX
+       #Aws_secret_key: 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
+       Tags:
+          -  Key: Name
+             Value: !FindInMap [EnvMap, !Ref Environment, name]
